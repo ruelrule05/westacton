@@ -8,7 +8,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <link href="{{ asset('css/app.css') }}" rel="stylesheet">
 
-        <title>Laravel</title>
+        <title>West Acton</title>
 
         <!-- Fonts -->
         <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
@@ -83,11 +83,12 @@
                     </ul>
                 </div>
             </div>
-            <div class="col-span-1 w-10/12 h-screen bg-green-500">
+            <div class="col-span-1 w-10/12 h-screen">
                 <div id="map" class="h-full"></div>
                 <div class="menu px-2 py-1 bg-white" id="menu">
-                <div class="menu-item share-pin"><i class="glyphicon glyphicon-file"></i>Share this pin</div>
-                <div class="menu-item remove-pin"><i class="glyphicon glyphicon-file"></i>Remove this pin</div>
+                <div class="menu-item" id="share-pin"><i class="glyphicon glyphicon-file"></i>Share this pin</div>
+                <div class="menu-item" id="remove-pin"><i class="glyphicon glyphicon-file"></i>Remove this pin</div>
+                <div class="menu-item" id="close-menu"><i class="glyphicon glyphicon-file"></i>Close menu</div>
             </div>
         </div>
     </body>
@@ -235,15 +236,19 @@
             saveSharedPin($("#lat").val(),$("#long").val(), id);
         });
 
-        $(".share-pin").on("click", function (e) {
+        $("#share-pin").on("click", function (e) {
             saveSharedPin(selectedMarker.lat, selectedMarker.long, uniqueId());
             
             hideMenuBox();
         });
 
-        $(".remove-pin").on("click", function(e) {
+        $("#remove-pin").on("click", function(e) {
             hideMenuBox();
             removeMarker(selectedMarker.id);
+        })
+
+        $("#close-menu").on("click", function(e) {
+            hideMenuBox();
         })
 
         $(".remove-shared-pin").on("click", function (e) {

@@ -11,7 +11,7 @@ class AppController extends Controller
     {
         $pins = Pin::all();
 
-        return view('welcome')
+        return view('home')
                 ->with('pins', $pins);
     }
 

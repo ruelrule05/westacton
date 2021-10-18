@@ -11,15 +11,8 @@ class AppController extends Controller
     {
         $pins = Pin::all();
 
-        $jsPins = [];
-
-        foreach ($pins as $pin) {
-            array_push($jsPins, $pin->coordinates);
-        }
-
         return view('home')
-                ->with('pins', $pins)
-                ->with('jsPins', $jsPins);
+                ->with('pins', $pins);
     }
 
     public function deletePin(Request $request)

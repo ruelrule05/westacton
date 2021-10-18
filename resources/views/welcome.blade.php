@@ -12,6 +12,7 @@
 
         <!-- Fonts -->
         <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+        <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
 
         <!-- Styles -->
         <style>
@@ -73,7 +74,7 @@
                                 <div class="flex justify-center space-x-1">
                                     <button class="border border-border-yellow-300 text-xs hover:text-white px-2 hover:bg-yellow-500 hover:border-transparent showPin" data-id="{{ $pin->marker_id }}" data-lat="{{ $pin->lat }}" data-long="{{ $pin->long }}">Show</button>
                                     @if (Session::getId() == $pin->owner)
-                                    <button class="border border-border-red-300 text-xs hover:text-white px-2 hover:bg-red-500 hover:border-transparent remove-pin" data-id="{{ $pin->marker_id }}">Remove</button>
+                                    <button class="border border-border-red-300 text-xs hover:text-white px-2 hover:bg-red-500 hover:border-transparent remove-shared-pin" data-id="{{ $pin->marker_id }}">Remove</button>
                                     @endif
                                     </div>
                             </div>
@@ -84,13 +85,13 @@
             </div>
             <div class="col-span-1 w-10/12 h-screen bg-green-500">
                 <div id="map" class="h-full"></div>
-                <div class="menu" id="menu">
+                <div class="menu px-2 py-1 bg-white" id="menu">
                 <div class="menu-item share-pin"><i class="glyphicon glyphicon-file"></i>Share this pin</div>
+                <div class="menu-item remove-pin"><i class="glyphicon glyphicon-file"></i>Remove this pin</div>
             </div>
         </div>
     </body>
 
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
     <script>
         var map, infoWindow, selectedMarker = {}, markers = {};
 
@@ -135,12 +136,6 @@
             infoWindow.open(map);
         }
 
-        $(document).ready(function() {
-            google.maps.event.addListener(map, 'click', function(event) {
-                placeMarker(event.latLng);
-            });
-        })
-
         $("#addPinForm").on('submit', function(e) {
             e.preventDefault();
 
@@ -156,6 +151,11 @@
             } else {
                 return placeMarker(new google.maps.LatLng(lat,long))
             }
+        }
+
+        function hideMenuBox() {
+            menuBox = document.getElementById("menu");
+            menuBox.style.display = "";
         }
 
         function placeMarker(location) {
@@ -174,13 +174,14 @@
 
             markers[id] = marker;
 
-            marker.addListener('click', () => {
-                removeMarker(id);
-            })
+            // marker.addListener('click', () => {
+            //     removeMarker(id);
+            // })
 
-            marker.addListener("rightclick", function(e) {
+            marker.addListener("click", function(e) {
                 selectedMarker.lat = this.getPosition().lat();
                 selectedMarker.long = this.getPosition().lng();
+                selectedMarker.id = this.id
 
                 for (prop in e) {
                     if (e[prop] instanceof MouseEvent) {
@@ -236,12 +237,16 @@
 
         $(".share-pin").on("click", function (e) {
             saveSharedPin(selectedMarker.lat, selectedMarker.long, uniqueId());
-
-            menuBox = document.getElementById("menu");
-            menuBox.style.display = "";
+            
+            hideMenuBox();
         });
 
-        $(".remove-pin").on("click", function (e) {
+        $(".remove-pin").on("click", function(e) {
+            hideMenuBox();
+            removeMarker(selectedMarker.id);
+        })
+
+        $(".remove-shared-pin").on("click", function (e) {
             $.ajax({
                 type: 'delete',
                 url: '/share-pin',
@@ -255,6 +260,12 @@
                 success: function() {
                     alert('Pin sharing removed. Please refresh to see changes.')
                 }
+            });
+        })
+
+        $(document).ready(function() {
+            google.maps.event.addListener(map, 'click', function(event) {
+                placeMarker(event.latLng);
             });
         })
     </script>

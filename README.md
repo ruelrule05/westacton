@@ -37,3 +37,10 @@ Open browser
 ```sh
 http://127.0.0.1:8000
 ```
+
+
+When testing the website on an HTTPS connection, remove the comment on the AppServiceProvider.php file located at the App\Providers folder.
+
+```sh
+\URL::forceScheme('https');
+```

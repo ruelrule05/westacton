@@ -4,6 +4,7 @@
 
 Project requires PHP 7.3+ or above to run.
 Framework used: Laravel v8.0
+Database: MySQL
 
 Setup environment file.
 
@@ -18,6 +19,8 @@ DB_DATABASE=westacton
 DB_USERNAME=<mysql_username>
 DB_PASSWORD=<mysql_password>
 ```
+
+**Make sure the DB_DATABASE value is an existing database
 
 Install the dependencies and devDependencies and start the server.
 

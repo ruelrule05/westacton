@@ -25,8 +25,20 @@
     </head>
     <body class="antialiased">
         <div class="flex">
-            <div class="w-2/12 bg-red-500">
-s
+            <div class="w-2/12 px-2 py-1">
+                <form id="addPinForm">
+                    <div class="block">
+                        <label for="latitude">Latitude:</label>
+                        <input type="text" id="lat" class="border border-gray-300 w-full">
+                    </div>
+                    <div class="block">
+                        <label for="longitude">Longitude:</label>
+                        <input type="text" id="long" class="border border-gray-300 w-full">
+                    </div>
+                    <div class="block mt-2">
+                        <button type="submit" class="w-full border border-gray-300 hover:text-white hover:bg-green-400 hover:border-transparent">Add Pin</button>
+                    </div>
+                </form>
             </div>
             <div class="col-span-1 w-10/12 h-screen bg-green-500">
                 <div id="map" class="h-full"></div>
@@ -45,7 +57,7 @@ s
         function initMap() {
             map = new google.maps.Map(document.getElementById('map'), {
                 center: {lat: -34.397, lng: 150.644},
-                zoom: 10
+                zoom: 15
             });
             infoWindow = new google.maps.InfoWindow;
 
@@ -83,27 +95,42 @@ s
             google.maps.event.addListener(map, 'click', function(event) {
                 placeMarker(event.latLng);
             });
-
-            function placeMarker(location) {
-
-                var id = uniqueId();
-
-                var marker = new google.maps.Marker({
-                    id: id,
-                    draggable: true,
-                    position: location, 
-                    map: map
-                });
-
-                marker.metadata = { type: 'point', id: id };
-
-                markers[id] = marker;
-
-                marker.addListener('click', () => {
-                    markers[id].setMap(null);
-                })
-            }
         })
+
+        $("#addPinForm").on('submit', function(e) {
+            e.preventDefault();
+
+            var lat = $("#lat").val();
+            var long = $("#long").val();
+
+            if (isNaN(lat) || isNaN(long)) {
+                alert('Please enter a valid coordinate.');
+            } else {
+                placeMarker(new google.maps.LatLng(lat,long))
+            }
+            
+        })
+
+        function placeMarker(location) {
+            var id = uniqueId();
+
+            var marker = new google.maps.Marker({
+                id: id,
+                draggable: true,
+                position: location, 
+                map: map
+            });
+
+            map.setCenter(location);
+
+            marker.metadata = { type: 'point', id: id };
+
+            markers[id] = marker;
+
+            marker.addListener('click', () => {
+                markers[id].setMap(null);
+            })
+        }
     </script>
     <!-- Replace the value of the key parameter with your own API key. -->
     <script async defer

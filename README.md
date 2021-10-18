@@ -28,6 +28,7 @@ Install the dependencies and devDependencies and start the server.
 composer install
 npm install
 npm run dev
+php artisan key:generate
 php artisan migrate
 php artisan serve
 ```

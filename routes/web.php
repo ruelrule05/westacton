@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/', [AppController::class, 'index']);
 
+Route::get('share-pin', [AppController::class, 'getPins']);
 Route::post('share-pin', [AppController::class, 'sharePin']);
 Route::delete('share-pin', [AppController::class, 'deletePin']);
 

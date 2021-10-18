@@ -159,8 +159,10 @@
             menuBox.style.display = "";
         }
 
-        function placeMarker(location) {
-            var id = uniqueId();
+        function placeMarker(location, id = null) {
+            if (id === null)
+                id = uniqueId();
+            
 
             var marker = new google.maps.Marker({
                 id: id,
@@ -269,6 +271,18 @@
         })
 
         $(document).ready(function() {
+            $.ajax({
+                type: 'get',
+                url: '/share-pin',
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                },
+                success: function(data) {
+                    for (x = 0; x < data.pins.length; x++) {
+                        placeMarker(new google.maps.LatLng(data.pins[x].lat, data.pins[x].long), data.pins[x].id);
+                    }
+                }
+            })
             google.maps.event.addListener(map, 'click', function(event) {
                 placeMarker(event.latLng);
             });

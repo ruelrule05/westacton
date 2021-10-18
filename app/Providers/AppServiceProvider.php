@@ -23,6 +23,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot()
     {
-        //
+        //REMOVE THIS COMMENT TO ENABLE HTTPS ON ASSETS
+        // \URL::forceScheme('https');
     }
 }

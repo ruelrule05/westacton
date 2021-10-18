@@ -34,8 +34,14 @@ s
         </div>
     </body>
 
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
     <script>
-        var map, infoWindow;
+        var map, infoWindow, markers = {};
+        var currentId = 0;
+        var uniqueId = function() {
+            return ++currentId;
+        }
+
         function initMap() {
             map = new google.maps.Map(document.getElementById('map'), {
                 center: {lat: -34.397, lng: 150.644},
@@ -72,6 +78,32 @@ s
                                     'Error: Your browser doesn\'t support geolocation.');
             infoWindow.open(map);
         }
+
+        $(document).ready(function() {
+            google.maps.event.addListener(map, 'click', function(event) {
+                placeMarker(event.latLng);
+            });
+
+            function placeMarker(location) {
+
+                var id = uniqueId();
+
+                var marker = new google.maps.Marker({
+                    id: id,
+                    draggable: true,
+                    position: location, 
+                    map: map
+                });
+
+                marker.metadata = { type: 'point', id: id };
+
+                markers[id] = marker;
+
+                marker.addListener('click', () => {
+                    markers[id].setMap(null);
+                })
+            }
+        })
     </script>
     <!-- Replace the value of the key parameter with your own API key. -->
     <script async defer

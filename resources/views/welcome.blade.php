@@ -4,6 +4,7 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta charset="UTF-8" />
+        <meta name="csrf-token" content="{{ csrf_token() }}">
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <link href="{{ asset('css/app.css') }}" rel="stylesheet">
 
@@ -21,6 +22,27 @@
             body {
                 font-family: 'Nunito', sans-serif;
             }
+
+            .menu {
+                width: 150px;
+                box-shadow: 3px 3px 5px #888888;
+                border-style: solid;
+                border-width: 1px;
+                border-color: grey;
+                border-radius: 2px;
+                position: fixed;
+                display: none;
+            }
+
+            .menu-item {
+                height: 20px;
+                background-color: white;
+            }
+
+            .menu-item:hover {
+                background-color: #6CB5FF;
+                cursor: pointer;
+            }
         </style>
     </head>
     <body class="antialiased">
@@ -37,27 +59,49 @@
                     </div>
                     <div class="block mt-2">
                         <button type="submit" class="w-full border border-gray-300 hover:text-white hover:bg-green-400 hover:border-transparent">Add Pin</button>
+                        <button type="button" class="w-full border border-gray-300 hover:text-white hover:bg-green-400 hover:border-transparent mt-1" id="sharePinBtn">Add & Share Pin</button>
                     </div>
                 </form>
+
+                <div class="mt-5">
+                    <h3 class="text-center uppercase">Shared Pins</h3>
+                    <ul id="sharedPinWrapper">
+                        @foreach ($pins as $pin)
+                        <li class="even:bg-gray-100 py-1">
+                            <div class="block w-full">
+                                <p class="text-xs">{{ $pin->coordinates }}</p>
+                                <div class="flex justify-center space-x-1">
+                                    <button class="border border-border-yellow-300 text-xs hover:text-white px-2 hover:bg-yellow-500 hover:border-transparent showPin" data-id="{{ $pin->marker_id }}" data-lat="{{ $pin->lat }}" data-long="{{ $pin->long }}">Show</button>
+                                    @if (Session::getId() == $pin->owner)
+                                    <button class="border border-border-red-300 text-xs hover:text-white px-2 hover:bg-red-500 hover:border-transparent remove-pin" data-id="{{ $pin->marker_id }}">Remove</button>
+                                    @endif
+                                    </div>
+                            </div>
+                        </li>
+                        @endforeach
+                    </ul>
+                </div>
             </div>
             <div class="col-span-1 w-10/12 h-screen bg-green-500">
                 <div id="map" class="h-full"></div>
+                <div class="menu" id="menu">
+                <div class="menu-item share-pin"><i class="glyphicon glyphicon-file"></i>Share this pin</div>
             </div>
         </div>
     </body>
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
     <script>
-        var map, infoWindow, markers = {};
-        var currentId = 0;
+        var map, infoWindow, selectedMarker = {}, markers = {};
+
         var uniqueId = function() {
-            return ++currentId;
+            return Date.now();
         }
 
         function initMap() {
             map = new google.maps.Map(document.getElementById('map'), {
                 center: {lat: -34.397, lng: 150.644},
-                zoom: 15
+                zoom: 12
             });
             infoWindow = new google.maps.InfoWindow;
 
@@ -100,16 +144,19 @@
         $("#addPinForm").on('submit', function(e) {
             e.preventDefault();
 
+            addPin();
+        })
+
+        function addPin() {
             var lat = $("#lat").val();
             var long = $("#long").val();
 
-            if (isNaN(lat) || isNaN(long)) {
+            if (lat.length == 0 || long.length == 0 || isNaN(lat) || isNaN(long)) {
                 alert('Please enter a valid coordinate.');
             } else {
-                placeMarker(new google.maps.LatLng(lat,long))
+                return placeMarker(new google.maps.LatLng(lat,long))
             }
-            
-        })
+        }
 
         function placeMarker(location) {
             var id = uniqueId();
@@ -117,20 +164,99 @@
             var marker = new google.maps.Marker({
                 id: id,
                 draggable: true,
-                position: location, 
-                map: map
+                position: location,
+                map: map,
             });
 
-            map.setCenter(location);
+            // map.setCenter(location);
 
             marker.metadata = { type: 'point', id: id };
 
             markers[id] = marker;
 
             marker.addListener('click', () => {
-                markers[id].setMap(null);
+                removeMarker(id);
+            })
+
+            marker.addListener("rightclick", function(e) {
+                selectedMarker.lat = this.getPosition().lat();
+                selectedMarker.long = this.getPosition().lng();
+
+                for (prop in e) {
+                    if (e[prop] instanceof MouseEvent) {
+                    mouseEvt = e[prop];
+                    var left = mouseEvt.clientX;
+                    var top = mouseEvt.clientY;
+
+                    menuBox = document.getElementById("menu");
+                    menuBox.style.left = left + "px";
+                    menuBox.style.top = top + "px";
+                    menuBox.style.display = "block";
+
+                    mouseEvt.preventDefault();
+
+                    menuDisplayed = true;
+                    }
+                }
+            });
+
+            return id;
+        }
+
+        function saveSharedPin(lat, long, id) {
+            $.ajax({
+                type: "post",
+                url: '/share-pin',
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                },
+                data: {
+                    marker_id: id,
+                    lat: lat,
+                    long: long
+                },
+                success: function() {
+                    alert('Pin shared publicly. Please refresh to see changes.');
+                }
             })
         }
+
+        function removeMarker(id) {
+            markers[id].setMap(null);
+        }
+
+        $(".showPin").on("click", function (e) {
+            placeMarker(new google.maps.LatLng(e.currentTarget.dataset.lat,e.currentTarget.dataset.long))
+        });
+
+        $("#sharePinBtn").on('click', function(e) {
+            var id = addPin();
+            saveSharedPin($("#lat").val(),$("#long").val(), id);
+        });
+
+        $(".share-pin").on("click", function (e) {
+            saveSharedPin(selectedMarker.lat, selectedMarker.long, uniqueId());
+
+            menuBox = document.getElementById("menu");
+            menuBox.style.display = "";
+        });
+
+        $(".remove-pin").on("click", function (e) {
+            $.ajax({
+                type: 'delete',
+                url: '/share-pin',
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                },
+                data: {
+                    "_method": 'DELETE',
+                    marker_id: e.currentTarget.dataset.id
+                },
+                success: function() {
+                    alert('Pin sharing removed. Please refresh to see changes.')
+                }
+            });
+        })
     </script>
     <!-- Replace the value of the key parameter with your own API key. -->
     <script async defer
